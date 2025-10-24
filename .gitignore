@@ -1,12 +1,12 @@
 # ==========================
-#  Dependencias
+# Dependencias
 # ==========================
 node_modules/
 npm-debug.log
 yarn-error.log
 
 # ==========================
-#  Variables de entorno
+# Variables de entorno
 # ==========================
 .env
 .env.local
@@ -14,7 +14,7 @@ yarn-error.log
 .env.production
 
 # ==========================
-#  Archivos temporales / compilados
+# Archivos temporales o compilados
 # ==========================
 dist/
 build/
@@ -24,13 +24,14 @@ coverage/
 Thumbs.db
 
 # ==========================
-#  Configuración del editor
+# Configuración del editor
 # ==========================
 .vscode/
 .idea/
 *.swp
 
 # ==========================
-#  Configuración de despliegue
+# Configuración de despliegue
 # ==========================
-.vercel
+# Se ignora la carpeta interna de Vercel, pero no el archivo vercel.json
+.vercel/
