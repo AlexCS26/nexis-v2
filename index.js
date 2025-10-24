@@ -1,6 +1,6 @@
 /**
  * @fileoverview Servidor principal de la API Nexis ERP (Producción - Kyob)
- * @version 1.0.0
+ * @version 1.0.1
  * @description Configuración completa de Express con conexión MongoDB,
  *              middlewares globales, seguridad, CORS y verificación de salud.
  */
@@ -24,11 +24,11 @@ const app = express();
 /* ==========================================
    Configuración base del entorno
    ========================================== */
-app.set("trust proxy", 1); // Confía en proxy (necesario en Kyob o balanceadores)
-app.use(helmet()); // Seguridad de cabeceras HTTP
-app.use(corsMiddleware); // CORS centralizado
+app.set("trust proxy", 1);
+app.use(helmet());
+app.use(corsMiddleware);
 app.use(express.json({ limit: "10mb" }));
-app.use(morgan("combined")); // Logs en formato estándar
+app.use(morgan("combined"));
 
 /* ==========================================
    Conexión a la base de datos
@@ -47,8 +47,8 @@ app.use(morgan("combined")); // Logs en formato estándar
    Limitador de solicitudes
    ========================================== */
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 300, // Límite por IP
+  windowMs: 15 * 60 * 1000,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Demasiadas solicitudes, inténtelo más tarde." },
@@ -73,7 +73,7 @@ app.get("/", (req, res) => {
   res.json({
     status: "OK",
     app: "Nexis ERP API",
-    version: "v1.0.0",
+    version: "v1.0.1",
     environment: process.env.NODE_ENV || "production",
     server: {
       hostname: os.hostname(),
@@ -115,15 +115,16 @@ process.on("unhandledRejection", (err) => {
 });
 
 /* ==========================================
-   Inicialización del servidor (Kyob)
+   Inicialización dinámica del servidor
    ========================================== */
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || Number(process.env.APP_PORT) || 8000;
 
-// Escucha en 0.0.0.0 para exponer el puerto al contenedor
+// Escucha en 0.0.0.0 para entornos con contenedor
 app.listen(PORT, "0.0.0.0", () => {
   console.clear();
   console.log("===========================================");
   console.log("NEXIS ERP API INICIADO");
+  console.log(`Puerto asignado: ${PORT}`);
   console.log(`URL base: http://localhost:${PORT}/api/v1`);
   console.log(
     `Inicio: ${moment().tz("America/Lima").format("YYYY-MM-DD HH:mm:ss")}`
