@@ -1,12 +1,12 @@
 # ==========================
-# Ignorar dependencias
+#  Dependencias
 # ==========================
 node_modules/
 npm-debug.log
 yarn-error.log
 
 # ==========================
-# Variables de entorno
+#  Variables de entorno
 # ==========================
 .env
 .env.local
@@ -14,7 +14,7 @@ yarn-error.log
 .env.production
 
 # ==========================
-# Archivos de compilación y temporales
+#  Archivos temporales / compilados
 # ==========================
 dist/
 build/
@@ -24,9 +24,13 @@ coverage/
 Thumbs.db
 
 # ==========================
-# Configuración del editor
+#  Configuración del editor
 # ==========================
 .vscode/
 .idea/
 *.swp
+
+# ==========================
+#  Configuración de despliegue
+# ==========================
 .vercel
