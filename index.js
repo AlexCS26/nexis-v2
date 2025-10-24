@@ -4,7 +4,7 @@
  * @description Configuración completa de Express con conexión MongoDB,
  *              middlewares globales, seguridad, CORS y verificación de salud.
  */
-
+require("module-alias/register");
 require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
@@ -14,8 +14,8 @@ const os = require("os");
 const moment = require("moment-timezone");
 
 // Configuración y rutas
-const connectDB = require("./src/config/db");
-const corsMiddleware = require("./src/config/cors.config");
+const connectDB = require("./src/core/config/db");
+const corsMiddleware = require("./src/core/config/cors.config");
 const apiRoutes = require("./src/routes/index");
 
 // Inicializar aplicación
