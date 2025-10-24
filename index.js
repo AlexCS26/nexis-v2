@@ -1,14 +1,12 @@
 /**
- * @fileoverview Servidor principal de la API Nexis ERP
+ * @fileoverview Servidor principal de la API Nexis ERP (Producción)
  * @version 1.0.0
  * @description Configuración base del servidor Express, conexión a MongoDB,
- *              middlewares globales, CORS profesional y rutas principales.
+ *              middlewares globales, CORS, seguridad y rutas principales.
  */
 
-// Dependencias principales
 require("dotenv").config();
 const express = require("express");
-const dotenv = require("dotenv");
 const morgan = require("morgan");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
@@ -20,41 +18,43 @@ const connectDB = require("./src/config/db");
 const corsMiddleware = require("./src/config/cors.config");
 const apiRoutes = require("./src/routes/index");
 
-// Variables de entorno
-dotenv.config();
-
 // Inicializar app
 const app = express();
 
-// Conectar a MongoDB
+/* ==========================================
+   Configuración base del entorno
+   ========================================== */
+app.set("trust proxy", 1); // ← Solución al error X-Forwarded-For (confía en el proxy)
 connectDB();
 
-// ──────────────────────────────────────────────
-// 🛡️ Middlewares globales
-// ──────────────────────────────────────────────
-app.use(helmet());
-app.use(corsMiddleware); // ✅ CORS profesional centralizado
+/* ==========================================
+   Middlewares globales
+   ========================================== */
+app.use(helmet()); // Seguridad HTTP
+app.use(corsMiddleware); // CORS centralizado
 app.use(express.json({ limit: "10mb" }));
-app.use(morgan("dev"));
+app.use(morgan("dev")); // Logs de peticiones HTTP
 
-// ──────────────────────────────────────────────
-// 🚫 Limitador de solicitudes
-// ──────────────────────────────────────────────
+/* ==========================================
+   Limitador de solicitudes
+   ========================================== */
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: "Demasiadas solicitudes, inténtelo más tarde." },
 });
 app.use("/api/v1", apiLimiter);
 
-// ──────────────────────────────────────────────
-// 🌐 Rutas API
-// ──────────────────────────────────────────────
+/* ==========================================
+   Rutas principales
+   ========================================== */
 app.use("/api/v1", apiRoutes);
 
-// ──────────────────────────────────────────────
-// 📍 Ruta raíz informativa
-// ──────────────────────────────────────────────
+/* ==========================================
+   Ruta raíz informativa
+   ========================================== */
 app.get("/", (req, res) => {
   const now = moment().tz("America/Lima").format("YYYY-MM-DD HH:mm:ss");
   const uptime = process.uptime();
@@ -66,6 +66,7 @@ app.get("/", (req, res) => {
     status: "OK",
     app: "Nexis ERP API",
     version: "v1.0.0",
+    environment: process.env.NODE_ENV || "development",
     server: {
       hostname: os.hostname(),
       platform: os.platform(),
@@ -81,9 +82,9 @@ app.get("/", (req, res) => {
   });
 });
 
-// ──────────────────────────────────────────────
-// 💓 Ruta de salud
-// ──────────────────────────────────────────────
+/* ==========================================
+   Ruta de salud
+   ========================================== */
 app.get("/api/v1/health", (req, res) => {
   const now = moment().tz("America/Lima").format("YYYY-MM-DD HH:mm:ss");
   res.json({
@@ -94,32 +95,35 @@ app.get("/api/v1/health", (req, res) => {
   });
 });
 
-// ──────────────────────────────────────────────
-// ⚠️ Manejo global de errores no controlados
-// ──────────────────────────────────────────────
+/* ==========================================
+   Manejo global de errores no controlados
+   ========================================== */
 process.on("uncaughtException", (err) => {
-  console.error("❌ Uncaught Exception:", err.message);
+  console.error("Uncaught Exception:", err.message);
   process.exit(1);
 });
 
 process.on("unhandledRejection", (err) => {
-  console.error("⚠️ Unhandled Rejection:", err.message);
+  console.error("Unhandled Rejection:", err.message);
 });
 
-// ──────────────────────────────────────────────
-// 🚀 Inicialización del servidor
-// ──────────────────────────────────────────────
+/* ==========================================
+   Inicialización del servidor
+   ========================================== */
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.clear();
-  console.log("===========================================");
-  console.log("🚀 NEXIS ERP API STARTED");
-  console.log(`📡 Base URL: http://localhost:${PORT}/api/v1`);
-  console.log(
-    `🕒 Started at: ${moment()
-      .tz("America/Lima")
-      .format("YYYY-MM-DD HH:mm:ss")}`
-  );
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log("===========================================");
-});
+
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.clear();
+    console.log("===========================================");
+    console.log("NEXIS ERP API STARTED");
+    console.log(`Base URL: http://localhost:${PORT}/api/v1`);
+    console.log(
+      `Started at: ${moment().tz("America/Lima").format("YYYY-MM-DD HH:mm:ss")}`
+    );
+    console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+    console.log("===========================================");
+  });
+}
+
+module.exports = app; // Exportación para Vercel o entorno sin puerto manual
