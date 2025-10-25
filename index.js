@@ -14,9 +14,9 @@ const os = require("os");
 const moment = require("moment-timezone");
 
 // Configuración y rutas
-const connectDB = require("@core/config/db");
-const corsMiddleware = require("@core/config/cors.config");
-const apiRoutes = require("@routes/index");
+const connectDB = require("./src/core/config/db");
+const corsMiddleware = require("./src/core/config/cors.config");
+const apiRoutes = require("./src/routes/index");
 
 // Inicializar aplicación
 const app = express();

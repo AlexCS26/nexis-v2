@@ -20,12 +20,9 @@ const moment = require("moment-timezone");
 /* ==========================================
    Fix para entorno Vercel (rutas absolutas)
    ========================================== */
-const connectDB = require(path.join(__dirname, "../src/core/config/db"));
-const corsMiddleware = require(path.join(
-  __dirname,
-  "../src/core/config/cors.config"
-));
-const apiRoutes = require(path.join(__dirname, "../src/routes/index"));
+const connectDB = require("../src/core/config/db");
+const corsMiddleware = require("../src/core/config/cors.config");
+const apiRoutes = require("../src/routes/index");
 
 /* ==========================================
    Inicializar aplicación Express
