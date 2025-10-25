@@ -1,29 +1,37 @@
 /**
- * @fileoverview Servidor principal de la API Nexis ERP (Producción - Kyob)
- * @version 1.0.1
- * @description Configuración completa de Express con conexión MongoDB,
- *              middlewares globales, seguridad, CORS y verificación de salud.
+ * @fileoverview Servidor principal de la API Nexis ERP (Vercel - Serverless)
+ * @version 1.2.0
+ * @description Configuración completa de Express optimizada para Vercel,
+ *              con conexión MongoDB, seguridad, CORS y rutas unificadas.
  */
+
 require("module-alias/register");
 require("dotenv").config();
+
+const path = require("path");
 const express = require("express");
+const serverless = require("serverless-http");
 const morgan = require("morgan");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const os = require("os");
 const moment = require("moment-timezone");
 
-// Configuración y rutas
-const connectDB = require("@core/config/db");
-const corsMiddleware = require("@core/config/cors.config");
-const apiRoutes = require("@routes/index");
-
-// Inicializar aplicación
-const app = express();
+/* ==========================================
+   Fix para entorno Vercel (rutas absolutas)
+   ========================================== */
+const connectDB = require(path.join(__dirname, "../src/core/config/db"));
+const corsMiddleware = require(path.join(
+  __dirname,
+  "../src/core/config/cors.config"
+));
+const apiRoutes = require(path.join(__dirname, "../src/routes/index"));
 
 /* ==========================================
-   Configuración base del entorno
+   Inicializar aplicación Express
    ========================================== */
+const app = express();
+
 app.set("trust proxy", 1);
 app.use(helmet());
 app.use(corsMiddleware);
@@ -33,13 +41,16 @@ app.use(morgan("combined"));
 /* ==========================================
    Conexión a la base de datos
    ========================================== */
+let mongoConnected = false;
 (async () => {
-  try {
-    await connectDB();
-    console.log("Conectado a MongoDB");
-  } catch (error) {
-    console.error("Error al conectar con MongoDB:", error.message);
-    process.exit(1);
+  if (!mongoConnected) {
+    try {
+      await connectDB();
+      mongoConnected = true;
+      console.log("✅ MongoDB conectado (Vercel)");
+    } catch (error) {
+      console.error("❌ Error al conectar con MongoDB:", error.message);
+    }
   }
 })();
 
@@ -47,7 +58,7 @@ app.use(morgan("combined"));
    Limitador de solicitudes
    ========================================== */
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 minutos
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
@@ -72,8 +83,8 @@ app.get("/", (req, res) => {
 
   res.json({
     status: "OK",
-    app: "Nexis ERP API",
-    version: "v1.0.1",
+    app: "Nexis ERP API (Serverless)",
+    version: "v1.2.0",
     environment: process.env.NODE_ENV || "production",
     server: {
       hostname: os.hostname(),
@@ -85,18 +96,20 @@ app.get("/", (req, res) => {
     endpoints: {
       health: "/api/v1/health",
       users: "/api/v1/users",
+      products: "/api/v1/products",
+      inventory: "/api/v1/inventory",
     },
   });
 });
 
 /* ==========================================
-   Endpoint de verificación de salud (Kyob)
+   Endpoint de verificación de salud
    ========================================== */
 app.get("/api/v1/health", (req, res) => {
   const now = moment().tz("America/Lima").format("YYYY-MM-DD HH:mm:ss");
   res.status(200).json({
     status: "Healthy",
-    database: "Connected",
+    database: mongoConnected ? "Connected" : "Disconnected",
     uptime: `${Math.floor(process.uptime())}s`,
     timestamp: now,
   });
@@ -107,7 +120,6 @@ app.get("/api/v1/health", (req, res) => {
    ========================================== */
 process.on("uncaughtException", (err) => {
   console.error("Error no controlado:", err.message);
-  process.exit(1);
 });
 
 process.on("unhandledRejection", (err) => {
@@ -115,20 +127,7 @@ process.on("unhandledRejection", (err) => {
 });
 
 /* ==========================================
-   Inicialización dinámica del servidor
+   Exportación Serverless (sin listen)
    ========================================== */
-const PORT = Number(process.env.PORT) || Number(process.env.APP_PORT) || 8000;
-
-// Escucha en 0.0.0.0 para entornos con contenedor
-app.listen(PORT, "0.0.0.0", () => {
-  console.clear();
-  console.log("===========================================");
-  console.log("NEXIS ERP API INICIADO");
-  console.log(`Puerto asignado: ${PORT}`);
-  console.log(`URL base: http://localhost:${PORT}/api/v1`);
-  console.log(
-    `Inicio: ${moment().tz("America/Lima").format("YYYY-MM-DD HH:mm:ss")}`
-  );
-  console.log(`Entorno: ${process.env.NODE_ENV || "production"}`);
-  console.log("===========================================");
-});
+module.exports = app;
+module.exports.handler = serverless(app);

@@ -35,3 +35,4 @@ Thumbs.db
 # ==========================
 # Se ignora la carpeta interna de Vercel, pero no el archivo vercel.json
 .vercel/
+.vercel
