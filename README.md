@@ -1,5 +1,5 @@
 NEXIS ERP + E-COMMERCE
-Enterprise Resource Planning Platform for Modern Businesses
+
 1. Overview
 
 Nexis ERP is a scalable enterprise platform that integrates ERP and E-commerce into one cohesive system.
