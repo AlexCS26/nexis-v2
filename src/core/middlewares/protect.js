@@ -9,7 +9,7 @@ const User = require("../../modules/user/modules/users_services/user_service/mod
 const Session = require("../../modules/user/modules/users_services/session_service/models/session.model");
 
 /* ──────────────────────────────────────────────
- * 🔧 Variables de entorno seguras
+ * Variables de entorno
  * ────────────────────────────────────────────── */
 const ACCESS_TOKEN_SECRET =
   process.env.ACCESS_TOKEN_SECRET || "default_access_secret";
@@ -19,7 +19,7 @@ const PERSISTENT_TOKEN_SECRET =
   process.env.PERSISTENT_TOKEN_SECRET || "default_persistent_secret";
 
 /* =========================================================
- * 🧩 Middleware principal: verifyToken
+ * Middleware principal: verifyToken
  * ========================================================= */
 exports.verifyToken = async (req, res, next) => {
   try {
@@ -35,7 +35,7 @@ exports.verifyToken = async (req, res, next) => {
     let decoded;
     let tokenType = "access";
 
-    // 🔹 Detectar tipo de token según su firma
+    // Detectar tipo de token según su firma
     try {
       decoded = jwt.verify(token, ACCESS_TOKEN_SECRET);
       tokenType = "access";
@@ -55,7 +55,7 @@ exports.verifyToken = async (req, res, next) => {
       }
     }
 
-    // 🔹 Buscar sesión activa asociada al token
+    // Buscar sesión activa asociada al token
     const session = await Session.findOne({
       user: decoded.id,
       $or: [
@@ -74,14 +74,14 @@ exports.verifyToken = async (req, res, next) => {
 
     const now = new Date();
 
-    // 🔹 Validar expiración del access token
+    // Validar expiración del access token
     if (tokenType === "access" && now > session.accessTokenExpiresAt) {
       return res
         .status(401)
         .json({ success: false, message: "Access token expirado" });
     }
 
-    // 🔹 Validar refresh token
+    // Validar refresh token
     if (tokenType === "refresh" && now > session.refreshTokenExpiresAt) {
       session.isActive = false;
       session.isRevoked = true;
@@ -91,7 +91,7 @@ exports.verifyToken = async (req, res, next) => {
         .json({ success: false, message: "Refresh token expirado" });
     }
 
-    // 🔹 Validar persistent token
+    // Validar persistent token
     if (tokenType === "persistent" && now > session.persistentTokenExpiresAt) {
       session.isActive = false;
       session.isRevoked = true;
@@ -101,7 +101,7 @@ exports.verifyToken = async (req, res, next) => {
         .json({ success: false, message: "Sesión persistente expirada" });
     }
 
-    // 🔹 Buscar usuario activo
+    // Buscar usuario activo
     const user = await User.findById(session.user)
       .populate({
         path: "role",
@@ -124,7 +124,7 @@ exports.verifyToken = async (req, res, next) => {
         .json({ success: false, message: "Usuario inactivo o bloqueado" });
     }
 
-    // ✅ Inyectar sesión y usuario en la request
+    // Inyectar sesión y usuario en la request
     req.session = session;
     req.user = {
       id: user._id,
@@ -147,7 +147,7 @@ exports.verifyToken = async (req, res, next) => {
 };
 
 /* =========================================================
- * 🧩 Middleware para managers
+ * Middleware para managers
  * ========================================================= */
 exports.verifyManagerToken = async (req, res, next) => {
   try {
@@ -171,7 +171,7 @@ exports.verifyManagerToken = async (req, res, next) => {
 };
 
 /* =========================================================
- * 🛡️ Middleware para permisos específicos
+ * Middleware para permisos específicos
  * ========================================================= */
 exports.hasPermission = (requiredPermission) => {
   return async (req, res, next) => {
